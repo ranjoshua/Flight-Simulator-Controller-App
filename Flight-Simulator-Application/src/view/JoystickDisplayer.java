@@ -21,7 +21,6 @@ public class JoystickDisplayer extends Canvas {
 		this.arrowFileName = new SimpleStringProperty();
 		x = getWidth() / 2;
 		y = getHeight() / 2;
-		//redraw();
 	}
 
 	public void redraw() {

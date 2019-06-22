@@ -12,4 +12,5 @@ public interface Model {
 	void closeClientConnection();
 	void interpretPath(String path);
 	void stopInterpreter();
+	void getPlanePos();
 }

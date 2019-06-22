@@ -1,8 +1,12 @@
 package view;
 
+import java.awt.Point;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.canvas.Canvas;
@@ -20,21 +24,27 @@ public class MapDisplayer extends Canvas {
 	private double cellSize;
 	private Label solution;
 	private int max;
-	private double sizeOfPlane = 0;
 	private StringProperty problem;
 	private StringProperty targetFileName;
-
-
+	private DoubleProperty lat, lon, heading;
+	public static boolean interpreterOn = false;
+	Point planePos;
+	static AtomicInteger p = new AtomicInteger(0);
+	
 	public MapDisplayer() {
 		setSolution(new Label());
 		this.airplaneFileName = new SimpleStringProperty();
 		this.targetFileName = new SimpleStringProperty();
 		this.problem = new SimpleStringProperty();
+		lat = new SimpleDoubleProperty();
+		lon = new SimpleDoubleProperty();
+		heading = new SimpleDoubleProperty();
 		cRow = 0;
 		cCol = 0;
-		targetRow = -1;
-		targetCol = -1;
+		targetRow = -12;
+		targetCol = -12;
 		max = 1;
+		this.planePos = new Point();
 		drawEmpty();
 	}
 
@@ -52,19 +62,9 @@ public class MapDisplayer extends Canvas {
 		this.cRow = airplainRow;
 		this.cCol = airplainCol;
 		this.cellSize = cellSize;
-		sizeOfPlane = cellSize;
 		redraw();
 	}
 
-	/*
-	 * we would like to call this function every time something has changed in the
-	 * map.
-	 */
-
-	/*
-	 * The RGB values for the colors: Red 255, 0, 0 Yellow 255, 255, 0 Green 0, 255,
-	 * 0
-	 */
 	public void redraw() {
 		if (mapData == null)
 			return;
@@ -104,32 +104,29 @@ public class MapDisplayer extends Canvas {
 				gc.setFill(Color.BLACK);
 				gc.fillText(String.valueOf(mapData[i][j]), j * w + 4, i * h + 15);
 			}
-		if (cellSize < 1)
-			gc.drawImage(airplane, Math.abs(cCol * w)*cellSize, Math.abs(cRow * h)*cellSize, w * 15, h * 15);
-		else
-			gc.drawImage(airplane, cCol * w, cRow * h, w, h);
-		if (targetRow >= 0 && targetCol >= 0) {
-			if (cellSize < 1)
-				gc.drawImage(target, targetRow * w, targetCol * h, w * 8, h * 8);
-			else
-				gc.drawImage(target, targetRow * w, targetCol * h, w, h);
-		}
+		gc.rotate(30);
+		gc.drawImage(airplane, Math.abs(cRow)-150+(p.get()/8) , Math.abs(cCol)-30+(p.get()/8), 35, 35);
+		gc.rotate(-30);
+		if (targetRow != (-12) && targetCol != (-12)) 
+				gc.drawImage(target, targetRow * w, targetCol * h, 20, 20);
+		
 	}
 
 	public void drawPath() {
 		System.out.println("Cheapest Path: " + solution.textProperty().get());
 		String[] path = solution.textProperty().get().split(",");
 		double printRow = cRow, printCol = cCol;
+		if (printRow < 0 || printCol < 0) {
+			printRow = 0;
+			printCol = 0;
+		}
 		GraphicsContext gc = getGraphicsContext2D();
 		double width = getWidth();
 		double height = getHeight();
 		double h = height / mapData.length;
 		double w = width / mapData[0].length;
 		gc.setStroke(Color.BLUE);
-		//if (cellSize < 1)
-		//	gc.setLineWidth(50);
-		//else
-			gc.setLineWidth(2.5);
+		gc.setLineWidth(2.5);
 		for (int i = 0; i < path.length; i++) {
 			String arrow = path[i];
 			switch (arrow) {
@@ -158,13 +155,24 @@ public class MapDisplayer extends Canvas {
 	}
 
 	public void setAirplainPosition(double row, double col) {
-		if (cRow != row || cCol != col) {
-			this.cRow = row;
-			this.cCol = col;
+		if (interpreterOn) {
+			this.planePos.setLocation(row, col);
+			p.incrementAndGet();
 			redraw();
 		}
 	}
-
+	
+	public void fixNewPlanePositionData() {
+		if (mapData != null) {
+			double ln = ((lon.doubleValue() - cRow) + cellSize) / cellSize;
+			double lt = (-(lat.doubleValue() - cCol) + cellSize) / cellSize;
+			int r = Math.round((float) (mapData.length * ln / getHeight()));
+			int c = Math.round((float) (mapData[0].length * lt / getWidth()));
+			planePos.setLocation(r, c);
+			setAirplainPosition(this.lon.doubleValue(), this.lat.doubleValue());
+		}
+	}
+	
 	public double getcRow() {
 		return cRow;
 	}
@@ -239,6 +247,30 @@ public class MapDisplayer extends Canvas {
 		gc.setLineWidth(30);
 		gc.strokeRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
 		gc.setLineWidth(1);
+	}
+
+	public DoubleProperty getLon() {
+		return lon;
+	}
+
+	public void setLon(double lon) {
+		this.lon.set(lon);
+	}
+
+	public DoubleProperty getHeading() {
+		return heading;
+	}
+
+	public void setHeading(double heading) {
+		this.heading.set(heading);
+	}
+
+	public DoubleProperty getLat() {
+		return lat;
+	}
+
+	public void setLat(double lat) {
+		this.lat.set(lat);
 	}
 
 }

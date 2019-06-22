@@ -42,6 +42,9 @@ public class MyModel extends Observable implements Model {
 	}
 
 	public void closeClientConnection() {
+		if (airplanePos != null)
+			airplanePos.interrupt();
+		airplanePos = null;
 		if (clientToSimulator != null)
 			clientToSimulator.closeConnection();
 		clientToSimulator = null;
@@ -51,7 +54,6 @@ public class MyModel extends Observable implements Model {
 		clientToSimulator = new DataSenderClient(ip, port);
 		Address.setClient(this.clientToSimulator);
 		clientToSimulator.start();
-		//getPlanePos();
 	}
 
 	public void sendToSimulator(String command) {
@@ -61,19 +63,27 @@ public class MyModel extends Observable implements Model {
 
 	public void getPlanePos() {
 		airplanePos = new Thread(() -> {
-			while (clientToSimulator != null) {
-				String[] lon = clientToSimulator.getFromServer("get position/longitude-deg").split("'");
-				String[] lat = clientToSimulator.getFromServer("get position/latitude-deg").split("'");
-				double longtitude = Double.parseDouble(lon[lon.length-2]);
-				double latitude = Double.parseDouble(lat[lat.length-2]);
-				double[] vals = { longtitude, latitude };
-				this.setChanged();
-				this.notifyObservers(vals);
+			while (clientToSimulator == null && DataReaderServer.isOpen())
 				try {
-					Thread.sleep(3000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+					Thread.sleep(500);
+				} catch (InterruptedException e1) {}
+			while (clientToSimulator != null) {
+				try {
+					String[] lat = clientToSimulator.getFromServer("get /position/latitude-deg").split("'");
+					String[] lon = clientToSimulator.getFromServer("get /position/longitude-deg").split("'");
+					String[] hea = clientToSimulator.getFromServer("get /instrumentation/heading-indicator/indicated-heading-deg").split("'");
+					double latitude = Double.parseDouble(lat[lat.length-2]);
+					double longtitude = Double.parseDouble(lon[lon.length-2]);
+					double heading = Double.parseDouble(hea[hea.length-2]);
+					double[] vals = { latitude, longtitude, heading };
+					setChanged();
+					notifyObservers(vals);
+					try {
+						Thread.sleep(750);
+					} catch (InterruptedException e) {
+						return;
+					}
+				} catch (NullPointerException e) {}
 			}
 		});
 		airplanePos.start();

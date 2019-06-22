@@ -38,10 +38,11 @@ public class MainWindowController implements Initializable, View, Observer {
 
 	private ViewModel vm;
 
-	public DoubleProperty lon;
-	public DoubleProperty lat;
 	public StringProperty scriptPath;
 	static Stage primaryStage;
+	public DoubleProperty aileron;
+	public DoubleProperty elevator;	
+	
 	@FXML
 	Slider Rudder;
 	@FXML
@@ -66,37 +67,25 @@ public class MainWindowController implements Initializable, View, Observer {
 	Button StopButton;
 	
 	
-	
-	////////////////////////////////	
-	// Joystick Variables
-	public DoubleProperty aileron;
-	public DoubleProperty elevator;	
-	////////////////////////////////
-	
 	public void setViewModel(ViewModel vm) {
 		this.vm = vm;
-		///////
 		vm.aileron.bind(this.aileron); // DATA BINDING
 		vm.elevator.bind(this.elevator); // DATA BINDING
-		//////
 		vm.rudder.bind(this.Rudder.valueProperty());
 		vm.throttle.bind(this.Throttle.valueProperty());	
 		vm.script.bind(this.TextBox.textProperty());
 		vm.path.bind(this.scriptPath);
+		
+		MapDisplayer.getLat().bind(vm.lat);
+        MapDisplayer.getLon().bind(vm.lon);
+        MapDisplayer.getHeading().bind(vm.heading);
+        
 		MapDisplayer.getSolution().textProperty().bind(vm.solution);
 		MapDisplayer.getSolution().textProperty().addListener((e) -> {
 			if (MapDisplayer.getProblem() != null) 
 				MapDisplayer.drawPath();
 		});
-		/*
-		lon.addListener((ChangeListener<Number>) (observable, oldValue, newValue) -> {
-			MapDisplayer.setAirplainPosition(lon.doubleValue(), lat.doubleValue());
-			System.out.println("POS HAS CHANGED");
-		});
-		
-		this.lon.bind(vm.lon);
-		this.lat.bind(vm.lat);
-		*/
+	
 	}
 	
 	
@@ -123,7 +112,13 @@ public class MainWindowController implements Initializable, View, Observer {
 				StringBuilder sb = new StringBuilder();
 				sb.append(MapDisplayer.getProblem());
 				sb.append("end" + "\n");
-				sb.append((int)MapDisplayer.getcRow()+","+(int)MapDisplayer.getcCol()+"\n");
+				int x = (int)MapDisplayer.getcRow();
+				int y = (int)MapDisplayer.getcCol();
+				if (x < 0 || y < 0) {
+					x = 0;
+					y = 0;
+				}
+				sb.append(x+","+y+"\n");
 				sb.append(MapDisplayer.getTarget());
 				getVm().calculatePath(myDialog.getIpFld().getText(), Integer.valueOf(myDialog.getPortFld().getText()), sb.toString());
 				myDialog.close();
@@ -187,6 +182,7 @@ public class MainWindowController implements Initializable, View, Observer {
 				MapDisplayer.setMax(Arrays.stream(values).max().getAsInt());
 				MapDisplayer.setFixedData(mat, airplainRow, airplainCol, cellSize);
 				s.close();
+				vm.getPlanePos();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -202,8 +198,6 @@ public class MainWindowController implements Initializable, View, Observer {
 			this.vm.closeClientConnection();
 		});
 
-		lon = new SimpleDoubleProperty();
-		lat = new SimpleDoubleProperty();
 		scriptPath = new SimpleStringProperty();
 		aileron = new SimpleDoubleProperty(0);
 		elevator = new SimpleDoubleProperty(0);
@@ -221,7 +215,7 @@ public class MainWindowController implements Initializable, View, Observer {
 		MapDisplayer.addEventHandler(MouseEvent.MOUSE_CLICKED, (e) -> {
 			updateTargetPosition(e.getX(), e.getY());
 		});
-
+		
 		double r = Math.min(JoystickDisplayer.getWidth(), JoystickDisplayer.getHeight()) / 8;
 		JoystickDisplayer.setPosition(JoystickDisplayer.getWidth() / 2 - r, JoystickDisplayer.getHeight() / 2 - r);
 
@@ -289,10 +283,8 @@ public class MainWindowController implements Initializable, View, Observer {
 
 	@Override
 	public void update(Observable arg0, Object arg1) {
-		// TODO Auto-generated method stub
-
+		MapDisplayer.fixNewPlanePositionData();
 	}
-
 
 	public ViewModel getVm() {
 		return vm;

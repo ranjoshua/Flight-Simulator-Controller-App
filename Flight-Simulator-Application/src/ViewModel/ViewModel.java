@@ -8,6 +8,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import view.MapDisplayer;
 
 public class ViewModel extends Observable implements Observer {
 
@@ -18,7 +19,7 @@ public class ViewModel extends Observable implements Observer {
 	public StringProperty solution;
 	public StringProperty script;
 	public StringProperty path;
-	public DoubleProperty lon, lat;
+	public DoubleProperty lon, lat, heading;
 	Model m;
 
 	public ViewModel(Model m) {
@@ -32,6 +33,7 @@ public class ViewModel extends Observable implements Observer {
 		path = new SimpleStringProperty();
 		lon = new SimpleDoubleProperty();
 		lat = new SimpleDoubleProperty();
+		heading = new SimpleDoubleProperty();
 		
 		rudder.addListener((e) -> {
 			m.sendToSimulator("set controls/flight/rudder " + rudder.doubleValue());
@@ -39,6 +41,7 @@ public class ViewModel extends Observable implements Observer {
 		throttle.addListener((e) -> {
 			m.sendToSimulator("set controls/engines/engine/throttle " + throttle.doubleValue());
 		});
+		
 		elevator.addListener((e) -> {
 			m.sendToSimulator("set controls/flight/elevator " + elevator.doubleValue());
 		});
@@ -50,6 +53,7 @@ public class ViewModel extends Observable implements Observer {
 
 	public void runInterpreter() {
 		m.interpretPath(this.path.get());
+		MapDisplayer.interpreterOn = true;
 	}
 	
 	public void connect(String ip, int port) {
@@ -66,13 +70,20 @@ public class ViewModel extends Observable implements Observer {
 		if (o == m) {
 			double[] values = (double[]) arg;
 			if (values != null) {
-				this.lon.set(values[0]);
-				this.lat.set(values[1]);
+				this.lat.set(values[0]);
+				this.lon.set(values[1]);
+				this.heading.set(values[2]);
+				setChanged();
+				notifyObservers();
 			}
 			else 
 				this.solution.set(m.getSolution());	
 		}
 	}
+	
+	public void getPlanePos(){
+        m.getPlanePos();
+    }
 	
 	public void openDataServer() {
 		m.startDataReaderServer();

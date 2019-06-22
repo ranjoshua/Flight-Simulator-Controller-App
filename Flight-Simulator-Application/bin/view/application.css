@@ -1,0 +1,21 @@
+/* JavaFX CSS - Leave this comment until you have at least create one rule which uses -fx-Property */
+
+
+.b{
+	-fx-border-color: black;
+	-fx-background-color: rgb(153,204,204) ;
+}
+
+.b:hover{
+	-fx-opacity: 0.4;
+}
+
+.pane{
+	-fx-background-color: white;
+}
+
+.map{
+	-fx-background-color: antiquewhite, white ;
+    -fx-background-insets: 0, 20 ;
+    -fx-padding: 20 ;
+}
