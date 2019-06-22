@@ -1,1 +1,1 @@
-java -jar ./client.jar
+java -jar "jars\Flight-Simulator-Controller.jar"
