@@ -105,7 +105,7 @@ public class MapDisplayer extends Canvas {
 				gc.fillText(String.valueOf(mapData[i][j]), j * w + 4, i * h + 15);
 			}
 		gc.rotate(30);
-		gc.drawImage(airplane, Math.abs(cRow)-150+(p.get()/8) , Math.abs(cCol)-30+(p.get()/8), 35, 35);
+		gc.drawImage(airplane, Math.abs(cRow)-150, Math.abs(cCol)-30, 35, 35);
 		gc.rotate(-30);
 		if (targetRow != (-12) && targetCol != (-12)) 
 				gc.drawImage(target, targetRow * w, targetCol * h, 20, 20);
